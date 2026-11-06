@@ -4,7 +4,7 @@ GitHub：[dvsusan/spring-boot4-demo](https://github.com/dvsusan/spring-boot4-dem
 
 这是一个可以直接运行、测试和扩展的 Spring Boot 4.0 多模块工程，配套《Spring Boot 4.0 企业级项目开发完整实践指南》。
 
-项目目前覆盖模块边界、自定义 Starter、Profile 配置、Bean 生命周期、REST API、OpenAPI、实时消息、PostgreSQL、MyBatis、JPA、事务、Flyway、多租户、分片、Redis、分布式锁、RocketMQ、Outbox、Quartz、Elasticsearch、MinIO 和 Excel 批处理。
+项目目前覆盖模块边界、自定义 Starter、Profile 配置、Bean 生命周期、REST API、OpenAPI、实时消息、PostgreSQL、MyBatis、JPA、事务、Flyway、多租户、分片、Redis、分布式锁、RocketMQ、Outbox、Quartz、Elasticsearch、MinIO、Excel 批处理和企业安全。
 
 ## 技术栈
 
@@ -26,6 +26,8 @@ GitHub：[dvsusan/spring-boot4-demo](https://github.com/dvsusan/spring-boot4-dem
 - Elasticsearch 8
 - MinIO
 - Apache POI 5
+- Spring Security 7
+- JWT、OAuth2 Resource Server、OIDC Client
 - Logback、MDC
 - JUnit 5、AssertJ
 
@@ -212,6 +214,51 @@ curl \
 ```
 
 当前任务状态保存在进程内存中，重启后会丢失。生产环境应把任务状态写入数据库，并使用对象存储或消息队列承接跨实例任务。
+
+## 企业安全
+
+第六章默认关闭，使用 `chapter6` Profile 启动：
+
+```bash
+java -jar demo-web/target/demo-web-1.0.0-SNAPSHOT.jar \
+  --spring.profiles.active=chapter6 \
+  --server.port=18106
+```
+
+登录并访问 JWT 身份接口：
+
+```bash
+curl -X POST "http://localhost:18106/api/v1/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"admin123"}'
+
+curl "http://localhost:18106/api/v1/security/me" \
+  -H "Authorization: Bearer <accessToken>"
+```
+
+教学账号：
+
+| 用户 | 密码 | 角色 | 数据范围 |
+|---|---|---|---|
+| `admin` | `admin123` | ADMIN | 本租户全部数据 |
+| `analyst` | `analyst123` | ANALYST | 本部门 |
+| `clerk` | `clerk123` | CLERK | 本人 |
+
+数据权限：
+
+```bash
+curl "http://localhost:18106/api/v1/security/data/orders" \
+  -H "Authorization: Bearer <accessToken>" \
+  -H "X-Tenant-Id: tenant_acme"
+```
+
+企业 OIDC 单点登录默认不启用。配置企业 Client ID、Secret 和 Issuer 后，增加
+`--demo.chapter6.oauth2.enabled=true`。回调地址为
+`http://localhost:18106/login/oauth2/code/corp-oidc`。
+
+支付接口需要 JWT、`Idempotency-Key` 和 HMAC 请求签名。签名规范、脚本和完整验证步骤见第 36 篇教程。
+
+JWT 撤销表、刷新令牌、请求 nonce 和幂等响应当前保存在进程内存中，只适合单实例教学。生产环境应迁移到 Redis 或数据库，并增加审计与定期清理。
 
 ## 订单 API
 
@@ -534,8 +581,14 @@ curl \
 28. Elasticsearch 搜索与聚合
 29. MinIO 文件上传、预览与权限控制
 30. Excel 百万级导入导出与异步处理
+31. Spring Security 7 认证、授权与过滤器链
+32. JWT 登录、刷新令牌与退出登录
+33. OAuth2 与 SSO 单点登录
+34. 多租户 RBAC 权限系统
+35. 行级、列级与部门数据权限
+36. 接口幂等、签名与防重放
 
-后续教程会继续接入安全、可观测性和部署能力。
+后续教程会继续接入可观测性和部署能力。
 
 ## 参与贡献
 

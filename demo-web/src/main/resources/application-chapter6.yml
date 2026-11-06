@@ -1,0 +1,15 @@
+demo:
+  chapter6:
+    enabled: true
+    oauth2:
+      # 企业 OIDC 参数齐全后再打开，避免本地无凭据启动失败。
+      enabled: ${DEMO_OAUTH2_ENABLED:false}
+    request-signing:
+      enabled: true
+    jwt:
+      issuer: spring-boot4-demo
+      access-ttl: 15m
+    token:
+      signing-key: ${DEMO_SIGNING_KEY:chapter6-demo-signing-key-change-before-production}
+      web-secret: ${DEMO_REQUEST_SIGNING_SECRET:chapter6-request-signing-secret}
+      refresh-ttl: 7d

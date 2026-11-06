@@ -83,6 +83,19 @@ demo:
       enabled: false
     excel:
       enabled: false
+  chapter6:
+    # 默认关闭安全链，保证前五章接口仍可直接访问。
+    enabled: false
+    oauth2:
+      enabled: false
+    request-signing:
+      enabled: true
+    jwt:
+      issuer: spring-boot4-demo
+      access-ttl: 15m
+    token:
+      signing-key: ${DEMO_SIGNING_KEY:chapter6-demo-signing-key-change-before-production}
+      web-secret: ${DEMO_REQUEST_SIGNING_SECRET:chapter6-request-signing-secret}
 
 springdoc:
   api-docs:
