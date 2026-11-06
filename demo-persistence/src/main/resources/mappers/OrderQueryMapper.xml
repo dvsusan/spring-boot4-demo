@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.susan.training.persistence.mapper.OrderQueryMapper">
+    <!-- 联表查询直接映射不可变 record，不依赖 JPA 实体生命周期。 -->
+    <resultMap id="orderSummaryMap"
+               type="com.susan.training.persistence.query.OrderSummaryRow">
+        <constructor>
+            <arg column="order_no" javaType="java.lang.String"/>
+            <arg column="customer_no" javaType="java.lang.String"/>
+            <arg column="customer_name" javaType="java.lang.String"/>
+            <arg column="amount" javaType="java.math.BigDecimal"/>
+            <arg column="status" javaType="java.lang.String"/>
+            <arg column="item_count" javaType="_long"/>
+            <arg column="total_quantity" javaType="_long"/>
+            <arg column="created_at" javaType="java.time.Instant"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="orderSearchMap"
+               type="com.susan.training.persistence.query.OrderSearchRow">
+        <constructor>
+            <arg column="order_no" javaType="java.lang.String"/>
+            <arg column="customer_no" javaType="java.lang.String"/>
+            <arg column="amount" javaType="java.math.BigDecimal"/>
+            <arg column="status" javaType="java.lang.String"/>
+            <arg column="channel" javaType="java.lang.String"/>
+            <arg column="metadata" javaType="java.lang.String"/>
+            <arg column="created_at" javaType="java.time.Instant"/>
+        </constructor>
+    </resultMap>
+
+    <sql id="pageWhere">
+        WHERE order_row.tenant_id = #{tenantId}
+        <if test="customerNo != null and customerNo != ''">
+            AND customer_row.customer_no = #{customerNo}
+        </if>
+    </sql>
+
+    <select id="findPage" resultMap="orderSummaryMap">
+        SELECT order_row.order_no,
+               customer_row.customer_no,
+               customer_row.name AS customer_name,
+               order_row.amount,
+               order_row.status,
+               COUNT(item_row.id) AS item_count,
+               COALESCE(SUM(item_row.quantity), 0) AS total_quantity,
+               order_row.created_at
+        FROM purchase_orders order_row
+        JOIN customers customer_row
+          ON customer_row.id = order_row.customer_id
+        LEFT JOIN order_items item_row
+          ON item_row.order_id = order_row.id
+        <include refid="pageWhere"/>
+        GROUP BY order_row.id,
+                 order_row.order_no,
+                 customer_row.customer_no,
+                 customer_row.name,
+                 order_row.amount,
+                 order_row.status,
+                 order_row.created_at
+        ORDER BY order_row.created_at DESC, order_row.order_no DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="count" resultType="long">
+        SELECT COUNT(*)
+        FROM purchase_orders order_row
+        JOIN customers customer_row
+          ON customer_row.id = order_row.customer_id
+        <include refid="pageWhere"/>
+    </select>
+
+    <select id="search" resultMap="orderSearchMap">
+        SELECT order_row.order_no,
+               customer_row.customer_no,
+               order_row.amount,
+               order_row.status,
+               order_row.metadata ->> 'channel' AS channel,
+               order_row.metadata::text AS metadata,
+               order_row.created_at
+        FROM purchase_orders order_row
+        JOIN customers customer_row
+          ON customer_row.id = order_row.customer_id
+        WHERE order_row.tenant_id = #{tenantId}
+        <if test="keyword != null and keyword != ''">
+            AND EXISTS (
+                SELECT 1
+                FROM order_items item_row
+                WHERE item_row.order_id = order_row.id
+                  AND item_row.search_vector
+                      @@ plainto_tsquery('simple', #{keyword})
+            )
+        </if>
+        <if test="channel != null and channel != ''">
+            AND order_row.metadata ->> 'channel' = #{channel}
+        </if>
+        ORDER BY order_row.created_at DESC
+        LIMIT #{limit}
+    </select>
+</mapper>

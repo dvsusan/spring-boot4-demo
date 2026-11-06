@@ -1,0 +1,30 @@
+spring:
+  data:
+    redis:
+      host: ${REDIS_HOST:127.0.0.1}
+      port: ${REDIS_PORT:6379}
+      repositories:
+        # 使用 RedisTemplate，而不是 Redis Repository。
+        enabled: false
+  elasticsearch:
+    uris: ${ELASTICSEARCH_URIS:http://127.0.0.1:9200}
+
+demo:
+  chapter4:
+    redis:
+      enabled: true
+      ttl: 5m
+    redisson:
+      enabled: true
+      address: ${REDISSON_ADDRESS:redis://127.0.0.1:6379}
+    rocketmq:
+      enabled: true
+      consume: ${ROCKETMQ_CONSUME:true}
+      namesrv: ${ROCKETMQ_NAMESRV:127.0.0.1:9876}
+      producer-group: chapter4-producer
+      consumer-group: chapter4-consumer
+      topic: order-created
+    jobs:
+      enabled: true
+    elasticsearch:
+      enabled: true

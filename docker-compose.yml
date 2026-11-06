@@ -1,0 +1,78 @@
+services:
+  postgres:
+    # 本地教学使用 PostgreSQL 17，SQL 兼容 PostgreSQL 14 及以上版本。
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: spring_boot4
+      POSTGRES_USER: spring_boot4
+      POSTGRES_PASSWORD: spring_boot4
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U spring_boot4 -d spring_boot4"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - spring-boot4-postgres:/var/lib/postgresql/data
+
+  redis:
+    # 缓存和 Redisson 章节共用同一个 Redis。
+    image: redis:7.4-alpine
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - spring-boot4-redis:/data
+
+  rocketmq-namesrv:
+    # RocketMQ NameServer 提供服务发现。
+    image: apache/rocketmq:5.3.1
+    command: sh mqnamesrv
+    ports:
+      - "9876:9876"
+
+  rocketmq-broker:
+    # Broker 使用宿主机可访问的 127.0.0.1 注册，适合本地教学。
+    image: apache/rocketmq:5.3.1
+    depends_on:
+      - rocketmq-namesrv
+    command: sh mqbroker -n rocketmq-namesrv:9876 -c /home/rocketmq/broker.conf
+    ports:
+      - "10909:10909"
+      - "10911:10911"
+      - "10912:10912"
+    volumes:
+      - ./infra/rocketmq/broker.conf:/home/rocketmq/broker.conf:ro
+
+  elasticsearch:
+    # 单节点搜索环境关闭安全认证，仅用于本地学习。
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.5
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    volumes:
+      - spring-boot4-elasticsearch:/usr/share/elasticsearch/data
+
+  minio:
+    # 文件章节使用独立 MinIO，9000 提供 S3 API，9001 提供管理控制台。
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - spring-boot4-minio:/data
+
+volumes:
+  # 命名卷保留本地数据，执行 docker compose down -v 才会删除。
+  spring-boot4-postgres:
+  spring-boot4-redis:
+  spring-boot4-elasticsearch:
+  spring-boot4-minio:

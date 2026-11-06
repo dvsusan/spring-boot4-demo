@@ -20,6 +20,18 @@
             <artifactId>demo-order</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- Web 层通过持久化模块使用 MyBatis、JPA 和 PostgreSQL。 -->
+        <dependency>
+            <groupId>com.susan.training</groupId>
+            <artifactId>demo-persistence</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- 缓存、概念消息、锁和搜索等中间件适配器集中放在集成模块。 -->
+        <dependency>
+            <groupId>com.susan.training</groupId>
+            <artifactId>demo-integration</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <!-- 引入自定义 Starter 后，GreetingService 由自动配置负责创建。 -->
         <dependency>
             <groupId>com.susan.training</groupId>
@@ -41,10 +53,45 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
+        <!-- 生成 OpenAPI JSON/YAML，并提供可直接调试接口的 Swagger UI。 -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>${springdoc.version}</version>
+        </dependency>
+        <!-- 提供原生 WebSocket 服务端能力，用于订单状态实时推送。 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-websocket</artifactId>
+        </dependency>
+        <!-- Spring Boot 4 将 RestClient 自动配置拆为独立 Starter。 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-restclient</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
+        </dependency>
+        <!-- Spring Boot 4 将 MVC 测试能力拆为独立 Starter。 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webmvc-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- 自动化数据库测试不需要 Docker，会在测试进程内启动 PostgreSQL。 -->
+        <dependency>
+            <groupId>io.zonky.test</groupId>
+            <artifactId>embedded-postgres</artifactId>
+            <version>2.2.2</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- 默认 H2 Profile 让前 14 篇教程在没有 PostgreSQL 时仍可启动。 -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>runtime</scope>
         </dependency>
     </dependencies>
 

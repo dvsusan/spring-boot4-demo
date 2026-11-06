@@ -20,11 +20,13 @@
     <name>spring-boot4-demo</name>
     <description>Spring Boot 4.0 multi-module project example</description>
 
-    <!-- 根工程只负责聚合，三个子模块按依赖方向构建。 -->
+    <!-- 根工程只负责聚合，数据库适配层与 Web 层保持清晰边界。 -->
     <modules>
         <module>demo-common</module>
         <module>demo-greeting-starter</module>
         <module>demo-order</module>
+        <module>demo-persistence</module>
+        <module>demo-integration</module>
         <module>demo-web</module>
     </modules>
 
@@ -32,5 +34,14 @@
         <!-- 示例统一以 Java 21 编译，避免不同电脑的默认 JDK 造成结果差异。 -->
         <java.version>21</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- Springdoc 3.x 为 Spring Boot 4 提供 OpenAPI 与 Swagger UI。 -->
+        <springdoc.version>3.0.3</springdoc.version>
+        <!-- MyBatis 4.x 对应 Spring Boot 4，避免沿用 3.x 集成包。 -->
+        <mybatis-spring-boot.version>4.0.1</mybatis-spring-boot.version>
+        <!-- Redisson 与 RocketMQ 客户端独立于 Spring Boot BOM，版本在这里集中固定。 -->
+        <redisson.version>3.23.2</redisson.version>
+        <rocketmq-client.version>4.9.4</rocketmq-client.version>
+        <minio.version>8.5.9</minio.version>
+        <poi.version>5.4.1</poi.version>
     </properties>
 </project>

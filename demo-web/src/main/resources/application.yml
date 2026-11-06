@@ -2,9 +2,47 @@ spring:
   application:
     # 应用名会出现在日志、指标和监控数据中。
     name: demo-platform
+  messages:
+    # 参数校验消息统一从 classpath:messages*.properties 读取。
+    basename: messages
+    encoding: UTF-8
+    fallback-to-system-locale: false
   profiles:
     # 不指定启动参数时使用 dev 配置，方便本地学习。
     active: ${SPRING_PROFILES_ACTIVE:dev}
+  servlet:
+    multipart:
+      # 文件章节限制单文件和整个请求大小，避免无界上传。
+      max-file-size: 20MB
+      max-request-size: 21MB
+  datasource:
+    # 默认使用 H2 保持前 14 篇教程无需外部数据库即可启动。
+    url: jdbc:h2:mem:spring_boot4;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE
+    username: sa
+    password:
+  jpa:
+    open-in-view: false
+    hibernate:
+      # 默认 Profile 由 JPA 快速创建结构；db Profile 改用 Flyway。
+      ddl-auto: create-drop
+  flyway:
+    # PostgreSQL 结构迁移只在 db Profile 开启。
+    enabled: false
+  data:
+    redis:
+      repositories:
+        # 缓存章节使用 RedisTemplate，不需要扫描 Spring Data Redis Repository。
+        enabled: false
+    elasticsearch:
+      repositories:
+        # 搜索章节使用 ElasticsearchOperations，不自动扫描仓库。
+        enabled: false
+
+mybatis:
+  configuration:
+    # 数据库下划线列名自动映射为 Java 驼峰属性。
+    map-underscore-to-camel-case: true
+  mapper-locations: classpath:mappers/*.xml
 
 server:
   # 本地开发端口；启动时也可以用 --server.port 临时覆盖。
@@ -21,6 +59,38 @@ demo:
     max-page-size: 100
     # 冒号后的 local 是环境变量缺失时的默认值。
     region: ${DEMO_REGION:local}
+  order-client:
+    # HTTP Interface 默认访问当前应用；部署后可切换到独立的订单服务地址。
+    base-url: ${DEMO_ORDER_CLIENT_BASE_URL:http://localhost:${server.port:8080}}
+    connect-timeout: 2s
+    read-timeout: 3s
+  chapter4:
+    redis:
+      # 每项外部能力默认关闭，前面的章节无需 Redis 即可启动。
+      enabled: false
+    redisson:
+      enabled: false
+    rocketmq:
+      enabled: false
+      consume: false
+    jobs:
+      enabled: false
+    elasticsearch:
+      enabled: false
+  chapter5:
+    minio:
+      # MinIO 与 Excel 也按章节显式开启。
+      enabled: false
+    excel:
+      enabled: false
+
+springdoc:
+  api-docs:
+    # OpenAPI 描述文件同时提供 JSON 和 YAML 后缀。
+    path: /v3/api-docs
+  swagger-ui:
+    # 浏览器打开该路径即可查看并调用接口。
+    path: /swagger-ui.html
 
 management:
   endpoints:

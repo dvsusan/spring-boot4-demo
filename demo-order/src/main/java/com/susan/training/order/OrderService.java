@@ -1,5 +1,6 @@
 package com.susan.training.order;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
@@ -46,5 +47,35 @@ public class OrderService {
             throw new OrderNotFoundException(orderNo);
         }
         return order;
+    }
+
+    /**
+     * 按客户编号分页查询，limit 由 Web 层校验并限制上限。
+     */
+    public List<OrderView> findByCustomerId(String customerId, int limit) {
+        return orders.values()
+                .stream()
+                .filter(order -> order.customerId().equals(customerId))
+                .sorted((left, right) -> left.orderNo().compareTo(right.orderNo()))
+                .limit(limit)
+                .toList();
+    }
+
+    /**
+     * 更新订单金额；customerId 为空时保留原客户，避免 PATCH 请求覆盖未提交字段。
+     */
+    public OrderView update(String orderNo, String customerId, java.math.BigDecimal amount) {
+        OrderView current = findByOrderNo(orderNo);
+        String nextCustomerId = customerId == null || customerId.isBlank()
+                ? current.customerId()
+                : customerId;
+        OrderView updated = new OrderView(
+                current.orderNo(),
+                nextCustomerId,
+                amount,
+                current.status()
+        );
+        orders.put(orderNo, updated);
+        return updated;
     }
 }

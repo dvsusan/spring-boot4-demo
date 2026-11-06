@@ -1,0 +1,805 @@
+openapi: 3.1.0
+info:
+  title: Spring Boot 4 订单履约平台 API
+  description: 课程示例接口，覆盖订单、版本管理和实时事件
+  contact:
+    name: 苏三
+  version: v1
+servers:
+- url: http://localhost:8080
+  description: 本地开发环境
+tags:
+- name: 订单 API v1
+  description: 订单创建、查询与金额更新
+- name: 数据库库存
+  description: 准备库存并验证事务扣减
+- name: 数据库订单
+  description: JPA 写入、MyBatis 联表查询与 PostgreSQL 高级检索
+- name: 订单 API 版本管理
+  description: Header 与媒体类型两种版本选择方式
+- name: 订单实时事件
+  description: SSE 推送
+paths:
+  /api/v1/db/inventory/{productId}:
+    get:
+      tags:
+      - 数据库库存
+      summary: 查询库存
+      operationId: get
+      parameters:
+      - name: X-Tenant-Id
+        in: header
+        required: false
+        schema:
+          type: string
+          default: demo
+      - name: productId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseInventoryView"
+    put:
+      tags:
+      - 数据库库存
+      summary: 设置库存
+      description: 把指定商品库存设置为明确数量
+      operationId: set
+      parameters:
+      - name: X-Tenant-Id
+        in: header
+        required: false
+        schema:
+          type: string
+          default: demo
+      - name: productId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: quantity
+        in: query
+        required: true
+        schema:
+          type: integer
+          format: int32
+          minimum: 0
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseInventoryView"
+  /api/v1/orders:
+    get:
+      tags:
+      - 订单 API v1
+      summary: 按客户查询订单
+      description: 返回指定客户的有限数量订单
+      operationId: findByCustomer
+      parameters:
+      - name: customerId
+        in: query
+        description: 客户编号
+        required: true
+        schema:
+          type: string
+        example: C1001
+      - name: limit
+        in: query
+        description: 最大返回条数
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 20
+          maximum: 100
+          minimum: 1
+        example: 20
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseListOrderView"
+    post:
+      tags:
+      - 订单 API v1
+      summary: 创建订单
+      description: 创建成功返回 201 和订单快照
+      operationId: create
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrderRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseOrderView"
+  /api/v1/db/orders:
+    get:
+      tags:
+      - 数据库订单
+      summary: 分页查询订单
+      description: 使用 MyBatis 多表联查和显式 LIMIT/OFFSET
+      operationId: page
+      parameters:
+      - name: X-Tenant-Id
+        in: header
+        required: false
+        schema:
+          type: string
+          default: demo
+      - name: customerNo
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 1
+          minimum: 1
+      - name: size
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 10
+          maximum: 100
+          minimum: 1
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseOrderPage"
+    post:
+      tags:
+      - 数据库订单
+      summary: 创建数据库订单
+      description: 订单和库存扣减在同一事务中完成
+      operationId: create_1
+      parameters:
+      - name: X-Tenant-Id
+        in: header
+        required: false
+        schema:
+          type: string
+          default: demo
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlaceDatabaseOrderRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponsePersistentOrderView"
+  /api/v1/orders/{orderNo}:
+    get:
+      tags:
+      - 订单 API v1
+      summary: 查询订单
+      description: 根据订单号查询单个订单
+      operationId: find
+      parameters:
+      - name: orderNo
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseOrderView"
+    patch:
+      tags:
+      - 订单 API v1
+      summary: 更新订单金额
+      description: 使用更新校验组校验金额并返回最新快照
+      operationId: update
+      parameters:
+      - name: orderNo
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrderRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseOrderView"
+  /api/v1/system/virtual-thread:
+    get:
+      tags:
+      - system-controller
+      operationId: virtualThread
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseVirtualThreadInfo"
+  /api/v1/system/info:
+    get:
+      tags:
+      - system-controller
+      operationId: info
+      parameters:
+      - name: applicationName
+        in: query
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseSystemInfo"
+  /api/v1/system/greeting:
+    get:
+      tags:
+      - system-controller
+      operationId: greeting
+      parameters:
+      - name: name
+        in: query
+        required: false
+        schema:
+          type: string
+          default: Spring Boot
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseString"
+  /api/v1/system/config:
+    get:
+      tags:
+      - system-controller
+      operationId: config
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseConfigInfo"
+  /api/v1/system/bean:
+    get:
+      tags:
+      - system-controller
+      operationId: beanStatus
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseString"
+  /api/v1/events/orders:
+    get:
+      tags:
+      - 订单实时事件
+      summary: 订阅订单事件
+      description: 保持 HTTP 连接，持续接收 text/event-stream
+      operationId: subscribe
+      parameters:
+      - name: customerId
+        in: query
+        required: true
+        schema:
+          type: string
+          minLength: 1
+      responses:
+        "200":
+          description: OK
+          content:
+            text/event-stream:
+              schema:
+                $ref: "#/components/schemas/SseEmitter"
+  /api/v1/db/orders/{orderNo}:
+    get:
+      tags:
+      - 数据库订单
+      summary: 查询数据库订单
+      description: 使用 JPA 实体关系加载订单与明细
+      operationId: find_1
+      parameters:
+      - name: X-Tenant-Id
+        in: header
+        required: false
+        schema:
+          type: string
+          default: demo
+      - name: orderNo
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponsePersistentOrderView"
+  /api/v1/db/orders/search:
+    get:
+      tags:
+      - 数据库订单
+      summary: 全文与 JSONB 检索
+      description: 组合商品全文索引和订单元数据过滤
+      operationId: search
+      parameters:
+      - name: X-Tenant-Id
+        in: header
+        required: false
+        schema:
+          type: string
+          default: demo
+      - name: keyword
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: channel
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 20
+          maximum: 100
+          minimum: 1
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseListOrderSearchRow"
+  /api/orders/{orderNo}:
+    get:
+      tags:
+      - 订单 API 版本管理
+      summary: 查询订单 v2
+      description: "请求头 X-Api-Version: 2 选择 v2 契约"
+      operationId: findV3
+      parameters:
+      - name: orderNo
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: X-Api-Version
+        in: header
+        schema:
+          type: string
+          enum:
+          - "2"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/vnd.susan.order.v3+json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseOrderViewV3"
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseOrderViewV2"
+components:
+  schemas:
+    ApiResponseInventoryView:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/InventoryView"
+        timestamp:
+          type: string
+          format: date-time
+    InventoryView:
+      type: object
+      properties:
+        productId:
+          type: string
+        availableQuantity:
+          type: integer
+          format: int32
+    CreateOrderRequest:
+      type: object
+      properties:
+        customerId:
+          type: string
+          maxLength: 32
+          minLength: 0
+        amount:
+          type: number
+      required:
+      - amount
+      - customerId
+    ApiResponseOrderView:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/OrderView"
+        timestamp:
+          type: string
+          format: date-time
+    OrderView:
+      type: object
+      properties:
+        orderNo:
+          type: string
+        customerId:
+          type: string
+        amount:
+          type: number
+        status:
+          type: string
+          enum:
+          - CREATED
+    Item:
+      type: object
+      properties:
+        productId:
+          type: string
+          minLength: 1
+        productName:
+          type: string
+          minLength: 1
+        quantity:
+          type: integer
+          format: int32
+          minimum: 1
+        unitPrice:
+          type: number
+          minimum: 0.01
+      required:
+      - productId
+      - productName
+      - unitPrice
+    PlaceDatabaseOrderRequest:
+      type: object
+      properties:
+        customerNo:
+          type: string
+          minLength: 1
+        customerName:
+          type: string
+          minLength: 1
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Item"
+          minItems: 1
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - customerName
+      - customerNo
+      - items
+    ApiResponsePersistentOrderView:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/PersistentOrderView"
+        timestamp:
+          type: string
+          format: date-time
+    PersistentOrderView:
+      type: object
+      properties:
+        orderNo:
+          type: string
+        customerNo:
+          type: string
+        customerName:
+          type: string
+        amount:
+          type: number
+        status:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Item"
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+    ApiResponseVirtualThreadInfo:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/VirtualThreadInfo"
+        timestamp:
+          type: string
+          format: date-time
+    VirtualThreadInfo:
+      type: object
+      properties:
+        virtual:
+          type: boolean
+        threadName:
+          type: string
+    ApiResponseSystemInfo:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/SystemInfo"
+        timestamp:
+          type: string
+          format: date-time
+    SystemInfo:
+      type: object
+      properties:
+        applicationName:
+          type: string
+        javaVersion:
+          type: string
+        javaVendor:
+          type: string
+        activeProfiles:
+          type: array
+          items:
+            type: string
+    ApiResponseString:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+    ApiResponseConfigInfo:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/ConfigInfo"
+        timestamp:
+          type: string
+          format: date-time
+    ConfigInfo:
+      type: object
+      properties:
+        environmentLabel:
+          type: string
+        maxPageSize:
+          type: integer
+          format: int32
+        region:
+          type: string
+        port:
+          type: string
+    ApiResponseListOrderView:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderView"
+        timestamp:
+          type: string
+          format: date-time
+    SseEmitter:
+      type: object
+      properties:
+        timeout:
+          type: integer
+          format: int64
+    ApiResponseOrderPage:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/OrderPage"
+        timestamp:
+          type: string
+          format: date-time
+    OrderPage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderSummaryRow"
+        totalElements:
+          type: integer
+          format: int64
+        page:
+          type: integer
+          format: int32
+        size:
+          type: integer
+          format: int32
+    OrderSummaryRow:
+      type: object
+      properties:
+        orderNo:
+          type: string
+        customerNo:
+          type: string
+        customerName:
+          type: string
+        amount:
+          type: number
+        status:
+          type: string
+        itemCount:
+          type: integer
+          format: int64
+        totalQuantity:
+          type: integer
+          format: int64
+        createdAt:
+          type: string
+          format: date-time
+    ApiResponseListOrderSearchRow:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderSearchRow"
+        timestamp:
+          type: string
+          format: date-time
+    OrderSearchRow:
+      type: object
+      properties:
+        orderNo:
+          type: string
+        customerNo:
+          type: string
+        amount:
+          type: number
+        status:
+          type: string
+        channel:
+          type: string
+        metadata:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    ApiResponseOrderViewV3:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/OrderViewV3"
+        timestamp:
+          type: string
+          format: date-time
+    OrderViewV3:
+      type: object
+      properties:
+        orderNo:
+          type: string
+        customerId:
+          type: string
+        amount:
+          type: number
+        status:
+          type: string
+        links:
+          type: object
+          additionalProperties:
+            type: string
+    ApiResponseOrderViewV2:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/OrderViewV2"
+        timestamp:
+          type: string
+          format: date-time
+    OrderViewV2:
+      type: object
+      properties:
+        orderNo:
+          type: string
+        customerId:
+          type: string
+        amount:
+          type: number
+        status:
+          type: string
+        statusLabel:
+          type: string
