@@ -1,0 +1,14 @@
+demo:
+  environment:
+    # 生产环境使用更保守的分页上限。
+    label: prod
+    max-page-size: 20
+  greeting:
+    # 在生产配置中覆盖问候模板。
+    message: "生产环境你好，%s"
+
+management:
+  endpoint:
+    health:
+      # 不向普通调用方暴露健康检查内部详情。
+      show-details: never

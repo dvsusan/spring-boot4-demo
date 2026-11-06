@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- 统一继承 Spring Boot 4.0.3 的依赖版本和 Maven 插件配置。 -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>4.0.3</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>com.susan.training</groupId>
+    <artifactId>demo-platform</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <name>spring-boot4-demo</name>
+    <description>Spring Boot 4.0 multi-module project example</description>
+
+    <!-- 根工程只负责聚合，三个子模块按依赖方向构建。 -->
+    <modules>
+        <module>demo-common</module>
+        <module>demo-greeting-starter</module>
+        <module>demo-order</module>
+        <module>demo-web</module>
+    </modules>
+
+    <properties>
+        <!-- 示例统一以 Java 21 编译，避免不同电脑的默认 JDK 造成结果差异。 -->
+        <java.version>21</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+</project>

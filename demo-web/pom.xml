@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.susan.training</groupId>
+        <artifactId>demo-platform</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>demo-web</artifactId>
+
+    <dependencies>
+        <!-- Web 模块依赖订单业务，由它完成 HTTP 协议适配。 -->
+        <dependency>
+            <groupId>com.susan.training</groupId>
+            <artifactId>demo-order</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- 引入自定义 Starter 后，GreetingService 由自动配置负责创建。 -->
+        <dependency>
+            <groupId>com.susan.training</groupId>
+            <artifactId>demo-greeting-starter</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- Spring Boot 4 创建 MVC 应用时优先使用细分的 webmvc Starter。 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webmvc</artifactId>
+        </dependency>
+        <!-- 提供 Jakarta Bean Validation 的参数校验实现。 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+        <!-- 为健康检查、指标和后续生产监控提供基础能力。 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- 把 Web 模块及依赖的业务模块重新打包为可执行 JAR。 -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>

@@ -1,0 +1,13 @@
+demo:
+  environment:
+    # 开发环境允许更大的示例分页上限。
+    label: dev
+    max-page-size: 50
+  greeting:
+    # 覆盖公共问候模板，便于识别当前环境。
+    message: "开发环境你好，%s"
+
+logging:
+  level:
+    # 本地调试输出项目包的 DEBUG 日志。
+    com.susan.training: DEBUG

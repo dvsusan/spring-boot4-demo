@@ -1,0 +1,35 @@
+spring:
+  application:
+    # 应用名会出现在日志、指标和监控数据中。
+    name: demo-platform
+  profiles:
+    # 不指定启动参数时使用 dev 配置，方便本地学习。
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
+server:
+  # 本地开发端口；启动时也可以用 --server.port 临时覆盖。
+  port: 8080
+
+demo:
+  greeting:
+    # 自定义 Starter 的配置项，关闭后 GreetingService 不会被创建。
+    enabled: true
+    message: "你好，%s，欢迎学习 Spring Boot 4"
+  environment:
+    # 该值会被 application-dev.yml 或 application-prod.yml 覆盖。
+    label: local
+    max-page-size: 100
+    # 冒号后的 local 是环境变量缺失时的默认值。
+    region: ${DEMO_REGION:local}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # 只开放健康检查和基础信息，避免把全部管理端点暴露出去。
+        include: health,info
+
+logging:
+  level:
+    # 打开项目包日志，便于观察 Bean 生命周期与请求链路。
+    com.susan.training: INFO

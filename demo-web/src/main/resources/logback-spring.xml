@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- 复用 Spring Boot 的默认日志级别、颜色和格式定义。 -->
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <!-- traceId 由 TraceIdFilter 写入 MDC；没有请求上下文时显示短横线。 -->
+    <property name="CONSOLE_LOG_PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] [traceId=%X{traceId:-}] %logger{36} - %msg%n"/>
+
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+</configuration>
