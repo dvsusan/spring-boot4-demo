@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - deployment.yaml
+  - service.yaml
+  - hpa.yaml
+images:
+  - name: spring-boot4-demo
+    newName: ghcr.io/dvsusan/spring-boot4-demo
+    newTag: 1.0.0

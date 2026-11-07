@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: spring-boot4-demo-config
+  namespace: spring-boot4-demo
+data:
+  # db 负责切换到 PostgreSQL 与 Flyway，chapter8 开启健康探针和监控端点。
+  SPRING_PROFILES_ACTIVE: "prod,db,chapter8"
+  SERVER_PORT: "8080"
+  JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError"
+  MANAGEMENT_HEALTH_SHOW_DETAILS: "never"
+  # postgresql 是集群内数据库 Service 名称；接入云数据库时替换为真实地址。
+  DB_URL: "jdbc:postgresql://postgresql:5432/spring_boot4"
+  OTEL_TRACING_EXPORT_ENABLED: "false"
+  OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: "http://otel-collector:4318/v1/traces"

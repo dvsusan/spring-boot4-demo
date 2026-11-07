@@ -28,6 +28,11 @@ GitHub：[dvsusan/spring-boot4-demo](https://github.com/dvsusan/spring-boot4-dem
 - Apache POI 5
 - Spring Security 7
 - JWT、OAuth2 Resource Server、OIDC Client
+- Resilience4j
+- Spring AI 2.0
+- Testcontainers
+- Micrometer、Prometheus、OpenTelemetry
+- Docker、Kubernetes、GitHub Actions
 - Logback、MDC
 - JUnit 5、AssertJ
 
@@ -259,6 +264,100 @@ curl "http://localhost:18106/api/v1/security/data/orders" \
 支付接口需要 JWT、`Idempotency-Key` 和 HMAC 请求签名。签名规范、脚本和完整验证步骤见第 36 篇教程。
 
 JWT 撤销表、刷新令牌、请求 nonce 和幂等响应当前保存在进程内存中，只适合单实例教学。生产环境应迁移到 Redis 或数据库，并增加审计与定期清理。
+
+## 异步、容错、性能与 Spring AI
+
+使用 `chapter7` Profile 启动：
+
+```bash
+java -jar demo-web/target/demo-web-1.0.0-SNAPSHOT.jar \
+  --spring.profiles.active=chapter7 \
+  --server.port=18107
+```
+
+并行聚合订单信息：
+
+```bash
+curl "http://localhost:18107/api/v1/chapter7/async/orders/SO1001"
+```
+
+Resilience4j 风控接口：
+
+```bash
+curl "http://localhost:18107/api/v1/chapter7/resilience/risk/SO1001?fail=false"
+```
+
+游标分页：
+
+```bash
+curl "http://localhost:18107/api/v1/chapter7/performance/orders?limit=3"
+```
+
+Spring AI 企业知识库客服：
+
+```bash
+curl -X POST "http://localhost:18107/api/v1/chapter7/ai/chat" \
+  -H "Content-Type: application/json" \
+  -d '{"question":"订单签收后怎么申请退款？"}'
+```
+
+默认使用无密钥的可重复演示模型。需要真实模型时，先在 `demo-web/pom.xml` 添加 `spring-ai-starter-model-openai`，再设置 `DEMO_AI_REMOTE_ENABLED=true`、`OPENAI_API_KEY`、`OPENAI_BASE_URL` 和 `DEMO_AI_MODEL`。
+
+Testcontainers 测试在没有 Docker 时会通过 `disabledWithoutDocker=true` 明确跳过；有 Docker 时执行：
+
+```bash
+mvn -pl demo-web -am \
+  -Dtest=PostgresTestcontainersIntegrationTest \
+  -Dsurefire.failIfNoSpecifiedTests=false \
+  test
+```
+
+## 可观测性与生产部署
+
+使用 `chapter8` Profile 启动监控示例：
+
+```bash
+java -jar demo-web/target/demo-web-1.0.0-SNAPSHOT.jar \
+  --spring.profiles.active=chapter8 \
+  --server.port=18108
+```
+
+检查探针和 Prometheus 指标：
+
+```bash
+curl "http://localhost:18108/actuator/health/readiness"
+curl "http://localhost:18108/actuator/prometheus"
+```
+
+需要 OTLP 追踪时设置 `OTEL_TRACING_EXPORT_ENABLED=true` 和 `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`。
+
+构建容器镜像：
+
+```bash
+docker build -t spring-boot4-demo:local .
+```
+
+Kubernetes 清单使用 `prod,db,chapter8` Profile，默认连接同一命名空间中的
+`postgresql:5432`，并关闭健康端点内部详情。先确保数据库和 Flyway
+迁移可用，再创建 Secret：
+
+```bash
+kubectl -n spring-boot4-demo create secret generic spring-boot4-demo-secret \
+  --from-literal=DB_USERNAME='<username>' \
+  --from-literal=DB_PASSWORD='<password>'
+kubectl apply -k deploy/k8s
+```
+
+如果数据库不在集群内，请先修改 `deploy/k8s/configmap.yaml` 中的 `DB_URL`。
+
+发布与回滚脚本：
+
+```bash
+scripts/deploy-k8s.sh ghcr.io/dvsusan/spring-boot4-demo:sha-<commit>
+scripts/rollback-k8s.sh
+```
+
+GitHub Actions 工作流位于 `.github/workflows/`。生产部署使用 GitHub Environment 和 `KUBE_CONFIG_DATA` Secret。
 
 ## 订单 API
 
@@ -587,8 +686,16 @@ curl \
 34. 多租户 RBAC 权限系统
 35. 行级、列级与部门数据权限
 36. 接口幂等、签名与防重放
+37. CompletableFuture 与虚拟线程
+38. Resilience4j 限流、熔断与重试
+39. 连接池、序列化与游标分页
+40. Spring AI 2.0 企业知识库与 AI 客服
+41. Testcontainers 集成测试
+42. Actuator、Prometheus 与 OpenTelemetry
+43. Docker 与 Kubernetes 生产部署
+44. CI/CD 自动化测试、发布与回滚
 
-后续教程会继续接入可观测性和部署能力。
+后续教程会进入企业 SaaS 项目完整实战。
 
 ## 参与贡献
 

@@ -96,6 +96,12 @@ demo:
     token:
       signing-key: ${DEMO_SIGNING_KEY:chapter6-demo-signing-key-change-before-production}
       web-secret: ${DEMO_REQUEST_SIGNING_SECRET:chapter6-request-signing-secret}
+  chapter7:
+    # 高级能力章节按需开启，避免本地缺少模型凭据时影响前六章。
+    enabled: false
+  chapter8:
+    # 可观测性示例单独开启，避免日常开发被额外指标和追踪配置干扰。
+    enabled: false
 
 springdoc:
   api-docs:

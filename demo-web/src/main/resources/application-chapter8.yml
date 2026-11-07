@@ -1,0 +1,43 @@
+demo:
+  chapter8:
+    enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # 本地演示暴露 Prometheus 和指标查询端点。
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      # 本地默认展示组件详情，Kubernetes 通过环境变量改为 never。
+      show-details: ${MANAGEMENT_HEALTH_SHOW_DETAILS:always}
+      probes:
+        # Kubernetes 使用独立的 liveness/readiness 探针。
+        enabled: true
+  health:
+    redis:
+      # 独立监控章节未启动 Redis，其他章节按需打开真实依赖健康检查。
+      enabled: false
+    elasticsearch:
+      # 同理避免未启动的 Elasticsearch 把本地健康状态变成 DOWN。
+      enabled: false
+  metrics:
+    tags:
+      application: ${spring.application.name:demo-platform}
+  tracing:
+    sampling:
+      probability: ${OTEL_SAMPLING_PROBABILITY:1.0}
+  otlp:
+    tracing:
+      # 默认关闭导出，配置 Collector 后设为 true。
+      export:
+        enabled: ${OTEL_TRACING_EXPORT_ENABLED:false}
+      endpoint: ${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT:http://localhost:4318/v1/traces}
+
+server:
+  shutdown: graceful
+
+spring:
+  lifecycle:
+    timeout-per-shutdown-phase: 20s

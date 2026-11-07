@@ -43,5 +43,21 @@
         <rocketmq-client.version>4.9.4</rocketmq-client.version>
         <minio.version>8.5.9</minio.version>
         <poi.version>5.4.1</poi.version>
+        <resilience4j.version>2.4.0</resilience4j.version>
+        <spring-ai.version>2.0.0</spring-ai.version>
+        <testcontainers.version>1.21.4</testcontainers.version>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- Spring AI 2.x 统一管理 ChatClient、模型核心和向量接口版本。 -->
+            <dependency>
+                <groupId>org.springframework.ai</groupId>
+                <artifactId>spring-ai-bom</artifactId>
+                <version>${spring-ai.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 </project>

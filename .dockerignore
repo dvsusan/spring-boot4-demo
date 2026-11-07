@@ -1,0 +1,7 @@
+.git
+.github
+.idea
+**/target
+*.log
+.DS_Store
+demo-web/src/main/resources/application-local.yml
